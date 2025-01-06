@@ -18,15 +18,13 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# model = ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp", temperature=1)
-model  = ChatOpenAI(
-    base_url="http://localhost:11434/v1",
-    model="llama-3.3-70b",
-    api_key="not required",
-    temperature=0,
-).bind(
-    response_format={"type": "json_object"},
-)
+model = ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp", temperature=1)
+# model  = ChatOpenAI(
+#     base_url="http://localhost:11434/v1",
+#     model="llama-3.3-70b",
+#     api_key="not required",
+#     temperature=0,
+# )
 
 class Character(BaseModel):
     name: str = Field(description="名前")
@@ -102,28 +100,22 @@ def generate_persona(service_title, service_data, character_data: Character):
     output_parser = StrOutputParser()
     
     positive_chain = positive_prompt | model | output_parser
+    positive_chain_output = positive_chain.invoke({"name": character_data.name, "age": character_data.age, "sex": character_data.age, "height": character_data.height, "weight": character_data.weight, "place": character_data.place, "job": character_data.job, "hobby": character_data.hobby, "personality": character_data.personality, "salary": character_data.salary, "service_title": service_title, "service_data": service_data})
+        
     negative_chain = negative_prompt | model | output_parser
+    negative_chain_output = negative_chain.invoke({"name": character_data.name, "age": character_data.age, "sex": character_data.age, "height": character_data.height, "weight": character_data.weight, "place": character_data.place, "job": character_data.job, "hobby": character_data.hobby, "personality": character_data.personality, "salary": character_data.salary, "service_title": service_title, "service_data": service_data})
+
     
     synthesize_prompt = ChatPromptTemplate.from_template(
         template="""
-            あなたは偏った２つの意見を述べています。この２つの意見を総合して、あなたの意見を清書してください。
+            あなたは{name}です。偏った２つの意見を述べています。この２つの意見を総合して、あなたの意見を述べてください。
             楽観的意見: {positive}
             悲観的意見: {negative}
         """
     )
     
-    synthesize_chain = (
-        RunnableParallel(
-            {
-                "positive": positive_chain,
-                "negative": negative_chain,
-            }
-        )
-        | synthesize_prompt
-        | model
-        | output_parser
-    )
-    return_data = synthesize_chain.invoke({"name": character_data.name, "age": character_data.age, "sex": character_data.age, "height": character_data.height, "weight": character_data.weight, "place": character_data.place, "job": character_data.job, "hobby": character_data.hobby, "personality": character_data.personality, "salary": character_data.salary, "service_title": service_title, "service_data": service_data})
+    synthesize_chain = synthesize_prompt | model | output_parser
+    return_data = synthesize_chain.invoke({"name": character_data.name, "positive": positive_chain_output, "negative": negative_chain_output})
     return return_data
 
 def remake_service(service_data, persona):
@@ -201,7 +193,6 @@ with st.form("persona_form"):
     number_of_people = st.number_input("生成する人数", min_value=1, max_value=10, value=1)
     submitted = st.form_submit_button("ペルソナ生成")
     if submitted:
-        person_model = []
         for i in range(number_of_people):
             person_model = generate_human_model(gender, age_range)
             st.markdown(f"""
