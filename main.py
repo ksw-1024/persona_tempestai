@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 import os
+import time
 
 import streamlit as st
 from langchain_core.prompts import ChatPromptTemplate
@@ -67,17 +68,24 @@ def generate_human_model(gender, age_range):
 
     prompt = ChatPromptTemplate.from_template(
         template="""
-            あなたは超次元的存在であり、人間を生み出す事ができる存在です。次の条件を満たした日本人の人間モデルを1人のみ生成してください。なるべく多種多様な人間を生み出す努力をしてください。\n\n年齢: {age}代\n性別: {gender}\n\n{format_instructions}
+            あなたは超次元的存在であり、人間を生み出す事ができる存在です。次の条件を満たした日本人の人間モデルを1人のみ生成してください。条件を守りながら、なるべく多種多様な職業、社会的地位の人間、かつ、現実に存在しうる人間を生み出す努力をしてください。\n\n年齢: {age}代\n性別: {gender}\n\n{format_instructions}
         """
     )
     
     prompt_with_format_instructions = prompt.partial(format_instructions=format_instructions)
     
     chain = prompt_with_format_instructions | model | output_parser
-    human_model = chain.invoke({"age": ", ".join(age_range), "gender": gender})
-    
-    return human_model
-
+    for _ in range(3):
+        try:
+            human_model = chain.invoke({"age": ", ".join(age_range), "gender": gender})
+            return human_model
+        except Exception as e:
+            st.warning(f"人間モデルの生成に失敗しました。再試行します。エラー: {e}")
+            time.sleep(5)
+            
+    st.error("有効な人間モデルの生成に失敗しました。")
+    return None
+            
 def generate_persona(service_title, service_data, character_data: Character):
     positive_prompt = ChatPromptTemplate.from_template(
         template="""
@@ -225,20 +233,31 @@ def generate_persona(service_title, service_data, character_data: Character):
     return_data = synthesize_chain.invoke({"name": character_data.name, "positive": positive_chain_output, "negative": negative_chain_output})
     return return_data
 
-def remake_service(service_data, persona):
-    prompt = ChatPromptTemplate.from_template(
+def remake_service(service_data, persona_list):
+    
+    output_parser = StrOutputParser()
+    
+    persona_summerize_prompt = ChatPromptTemplate.from_template(
         template="""
-            次のペルソナを元に、サービスを改良してください。
-            出力形式は、元のサービス要件と同じ形式で出力してください。
-            ペルソナ: {persona}
+            次のユーザーの意見を500字程度にまとめてください。
+            ユーザーの意見: {persona}
+        """
+    )
+    
+    persona_summerize_chain = persona_summerize_prompt | model | output_parser
+    persona_summerize = persona_summerize_chain.invoke({"persona": "\n".join(persona_list)})
+    
+    persona_remake_prompt = ChatPromptTemplate.from_template(
+        template="""
+            次のユーザーの意見の要約を元に、サービスを改良してください。
+            Markdown形式で記述してください。
+            ユーザーの意見: {persona}
             サービス要件: {service_data}
         """
     )
     
-    output_parser = StrOutputParser()
-    
-    chain = prompt | model | output_parser
-    return_data = chain.invoke({"persona": persona, "service_data": service_data})
+    chain = persona_remake_prompt | model | output_parser
+    return_data = chain.invoke({"persona": persona_summerize, "service_data": service_data})
     return return_data
 
 st.set_page_config(page_title="ペルソナ生成", layout="centered")
@@ -300,8 +319,13 @@ with st.form("persona_form"):
     number_of_people = st.number_input("生成する人数", min_value=1, max_value=10, value=1)
     submitted = st.form_submit_button("ペルソナ生成")
     if submitted:
+        people_list = []
+        persona_list = []
         for i in range(number_of_people):
             person_model = generate_human_model(gender, age_range)
+            if person_model is None:
+                break
+            people_list.append(person_model)
             st.markdown(f"""
                 ## 人間モデル生成完了
                 ### 生成された人間モデル
@@ -333,14 +357,17 @@ with st.form("persona_form"):
             """
             )
             persona_data = generate_persona(service_title, service_req, person_model)
+            persona_list.append(persona_data)
             st.markdown(f"""
                 ## ペルソナ生成完了
                 ### 生成されたペルソナ
             """
             )
             st.success(persona_data)
+            st.write("------------")
+            time.sleep(15)
             
-        remake_survice_data = remake_service(service_req, persona_data)
+        remake_survice_data = remake_service(service_req, persona_list)
         st.markdown(f"""
             ## サービス改良完了
             ### 改良されたサービス要件
