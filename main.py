@@ -18,15 +18,15 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=GOOGLE_API_KEY)
 
-model = ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp", temperature=1)
-# model  = ChatOpenAI(
-#     base_url="http://localhost:11434/v1",
-#     model="llama-3.3-70b",
-#     api_key="not required",
-#     temperature=0,
-# ).bind(
-#     response_format={"type": "json_object"},
-# )
+# model = ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp", temperature=1)
+model  = ChatOpenAI(
+    base_url="http://localhost:11434/v1",
+    model="llama-3.3-70b",
+    api_key="not required",
+    temperature=0,
+).bind(
+    response_format={"type": "json_object"},
+)
 
 class Character(BaseModel):
     name: str = Field(description="名前")
@@ -34,7 +34,7 @@ class Character(BaseModel):
     sex: str = Field(description="性別")
     height: int = Field(description="身長")
     weight: int = Field(description="体重")
-    place: str = Field(description="出身地")
+    place: str = Field(description="住んでいる市区町村")
     job: str = Field(description="職業")
     hobby: str = Field(description="趣味")
     personality: str = Field(description="性格")
@@ -126,6 +126,22 @@ def generate_persona(service_title, service_data, character_data: Character):
     return_data = synthesize_chain.invoke({"name": character_data.name, "age": character_data.age, "sex": character_data.age, "height": character_data.height, "weight": character_data.weight, "place": character_data.place, "job": character_data.job, "hobby": character_data.hobby, "personality": character_data.personality, "salary": character_data.salary, "service_title": service_title, "service_data": service_data})
     return return_data
 
+def remake_service(service_data, persona):
+    prompt = ChatPromptTemplate.from_template(
+        template="""
+            次のペルソナを元に、サービスを改良してください。
+            出力形式は、元のサービス要件と同じ形式で出力してください。
+            ペルソナ: {persona}
+            サービス要件: {service_data}
+        """
+    )
+    
+    output_parser = StrOutputParser()
+    
+    chain = prompt | model | output_parser
+    return_data = chain.invoke({"persona": persona, "service_data": service_data})
+    return return_data
+
 st.set_page_config(page_title="ペルソナ生成", layout="centered")
 
 st.markdown("""
@@ -210,3 +226,11 @@ with st.form("persona_form"):
             """
             )
             st.success(persona_data)
+            
+        remake_survice_data = remake_service(service_req, persona_data)
+        st.markdown(f"""
+            ## サービス改良完了
+            ### 改良されたサービス要件\n\n
+            {remake_survice_data}
+        """
+        )
