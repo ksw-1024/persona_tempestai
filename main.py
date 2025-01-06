@@ -1,409 +1,34 @@
 import os
 import time
-from dotenv import load_dotenv
-
 import pandas as pd
 
 import streamlit as st
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_google_genai import GoogleGenerativeAI
-from langchain.output_parsers import PydanticOutputParser
-from langchain_core.output_parsers import StrOutputParser
 
-import google.generativeai as genai
-from langchain_ollama.llms import OllamaLLM
+import matplotlib.pyplot as plt
+import japanize_matplotlib
+import matplotlib.font_manager as fm
 
-from pydantic import BaseModel, Field
+from dists.GeneratePersona import GenerateHumanModel, GenerateComment, OpinionSummerizer
+from dists.PlanRevisons import SuggestBusinessPlan
 
-load_dotenv()
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=GOOGLE_API_KEY)
+current_dir = os.getcwd()
+font_path = os.path.join(current_dir, "fonts", "NotoSansJP-VariableFont_wght.ttf")
+font_prop = fm.FontProperties(fname=font_path)
 
-model = GoogleGenerativeAI(model="gemini-2.0-flash-exp", temperature=1)
-# model  = OllamaLLM(
-#     model="llama-3-swallow-70b",
-#     temperature=1,
-# )
+graph_data = []
 
-class Character(BaseModel):
-    # 基本的な属性情報（デモグラフィック変数）
-    name: str = Field(description="氏名(フルネーム)")
-    age: int = Field(description="年齢")
-    sex: str = Field(description="性別")
-    residence: str = Field(description="居住地")
-    housing: str = Field(description="住居情報")
-    job: str = Field(description="職業・役職")
-    company_size: str = Field(description="会社規模")
-    salary: str = Field(description="年収")
-    educational_background: str = Field(description="学歴")
-    family_structure: str = Field(description="家族構成")
+def update_graph(person, data):
+    # 新しいデータを追加
+    graph_data.append((person.name, data.want_level))
     
-    # 心理的特性（サイコグラフィック変数）
-    values: str = Field(description="価値観・人生観")
-    lifestyle: str = Field(description="ライフスタイル")
-    hobbies: str = Field(description="趣味・嗜好")
-    goals: str = Field(description="目標・理想")
-    
-    # 行動特性（ビヘイビア変数）
-    purchasing_behavior: str = Field(description="購買行動")
-    information_sources: str = Field(description="情報収集方法")
-    devices: str = Field(description="使用デバイス")
-    sns_usage: str = Field(description="SNS利用状況")
-    daily_schedule: str = Field(description="日課・タイムスケジュール")
-    
-    # 現在の課題とニーズ
-    concerns: str = Field(description="悩み")
-    needs: str = Field(description="解決したいこと")
-    
-    # その他の詳細情報
-    favorite_brands: str = Field(description="好きなブランドや商品")
-    favorite_media: str = Field(description="よく見る映画・動画チャンネル")
-    relationships: str = Field(description="人間関係")
-    recent_events: str = Field(description="最近の出来事やエピソード")
-    
-class Opinion(BaseModel):
-    want_level: int = Field(description="サービスの魅力度レベル。0から10の間の整数値。")
-    reason: str = Field(description="理由。100字以内。")
-
-def generate_human_model(gender, age_range_start, age_range_end):
-    
-    output_parser = PydanticOutputParser(pydantic_object=Character)
-    format_instructions = output_parser.get_format_instructions()
-
-    prompt = ChatPromptTemplate.from_template(
-        template="""
-            あなたは超次元的存在であり、人間を生み出す事ができる存在です。次の条件を満たした日本人の人間モデルを1人のみ生成してください。条件を守りながら、なるべく多種多様な氏名、職業、家族構成、社会的地位の人間を生み出しなさい。\n\n年齢: {age}代\n性別: {gender}\n\n{format_instructions}
-        """
-    )
-    
-    prompt_with_format_instructions = prompt.partial(format_instructions=format_instructions)
-    
-    chain = prompt_with_format_instructions | model | output_parser
-    for _ in range(3):
-        try:
-            human_model = chain.invoke({"age": age_range_start + "〜" + age_range_end + "代", "gender": gender})
-            return human_model
-        except Exception as e:
-            st.warning(f"人間モデルの生成に失敗しました。再試行します。エラー: {e}")
-            time.sleep(5)
-            
-    st.error("有効な人間モデルの生成に失敗しました。")
-    return None
-            
-def generate_persona(service_title, service_data, character_data: Character):
-    positive_prompt = ChatPromptTemplate.from_template(
-        template="""
-            あなたは{name}です。プロフィールは以下の通りです。
-            名前: {name}
-            年齢: {age}歳
-            性別: {sex}
-            居住地: {residence}
-            住居情報: {housing}
-            職業・役職: {job}
-            会社規模: {company_size}
-            年収: {salary}
-            学歴: {educational_background}
-            家族構成: {family_structure}
-            価値観・人生観: {values}
-            ライフスタイル: {lifestyle}
-            趣味・嗜好: {hobbies}
-            目標・理想: {goals}
-            購買行動: {purchasing_behavior}
-            情報収集方法: {information_sources}
-            使用デバイス: {devices}
-            SNS利用状況: {sns_usage}
-            日課・タイムスケジュール: {daily_schedule}
-            悩み: {concerns}
-            解決したいこと: {needs}
-            好きなブランドや商品: {favorite_brands}
-            よく見る映画・動画チャンネル: {favorite_media}
-            人間関係: {relationships}
-            最近の出来事やエピソード: {recent_events}
-            
-            あなたは{service_title}のユーザーです。サービスに関する感想を述べてください。口調なども含めて、自由に書いてください。出来る限り肯定的に書いてください。
-            ただし、要件以外についてのコメントは控えてください。
-            {service_title}の要件: {service_data}
-        """
-    )
-    
-    negative_prompt = ChatPromptTemplate.from_template(
-        template="""
-            あなたは{name}です。プロフィールは以下の通りです。
-            名前: {name}
-            年齢: {age}歳
-            性別: {sex}
-            居住地: {residence}
-            住居情報: {housing}
-            職業・役職: {job}
-            会社規模: {company_size}
-            年収: {salary}
-            学歴: {educational_background}
-            家族構成: {family_structure}
-            価値観・人生観: {values}
-            ライフスタイル: {lifestyle}
-            趣味・嗜好: {hobbies}
-            目標・理想: {goals}
-            購買行動: {purchasing_behavior}
-            情報収集方法: {information_sources}
-            使用デバイス: {devices}
-            SNS利用状況: {sns_usage}
-            日課・タイムスケジュール: {daily_schedule}
-            悩み: {concerns}
-            解決したいこと: {needs}
-            好きなブランドや商品: {favorite_brands}
-            よく見る映画・動画チャンネル: {favorite_media}
-            人間関係: {relationships}
-            最近の出来事やエピソード: {recent_events}
-            
-            あなたは{service_title}のユーザーです。サービスに関する感想を述べてください。口調なども含めて、自由に書いてください。出来る限り否定的に書いてください。
-            ただし、要件以外についてのコメントは控えてください。
-            {service_title}の要件: {service_data}
-        """
-    )
-    
-    output_parser = StrOutputParser()
-    
-    positive_chain = positive_prompt | model | output_parser
-    positive_chain_output = positive_chain.invoke({
-        "name": character_data.name,
-        "age": character_data.age,
-        "sex": character_data.sex,
-        "residence": character_data.residence,
-        "housing": character_data.housing,
-        "job": character_data.job,
-        "company_size": character_data.company_size,
-        "salary": character_data.salary,
-        "educational_background": character_data.educational_background,
-        "family_structure": character_data.family_structure,
-        "values": character_data.values,
-        "lifestyle": character_data.lifestyle,
-        "hobbies": character_data.hobbies,
-        "goals": character_data.goals,
-        "purchasing_behavior": character_data.purchasing_behavior,
-        "information_sources": character_data.information_sources,
-        "devices": character_data.devices,
-        "sns_usage": character_data.sns_usage,
-        "daily_schedule": character_data.daily_schedule,
-        "concerns": character_data.concerns,
-        "needs": character_data.needs,
-        "favorite_brands": character_data.favorite_brands,
-        "favorite_media": character_data.favorite_media,
-        "relationships": character_data.relationships,
-        "recent_events": character_data.recent_events,
-        "service_title": service_title,
-        "service_data": service_data
-    })
-       
-    negative_chain = negative_prompt | model | output_parser
-    negative_chain_output = negative_chain.invoke({
-        "name": character_data.name,
-        "age": character_data.age,
-        "sex": character_data.sex,
-        "residence": character_data.residence,
-        "housing": character_data.housing,
-        "job": character_data.job,
-        "company_size": character_data.company_size,
-        "salary": character_data.salary,
-        "educational_background": character_data.educational_background,
-        "family_structure": character_data.family_structure,
-        "values": character_data.values,
-        "lifestyle": character_data.lifestyle,
-        "hobbies": character_data.hobbies,
-        "goals": character_data.goals,
-        "purchasing_behavior": character_data.purchasing_behavior,
-        "information_sources": character_data.information_sources,
-        "devices": character_data.devices,
-        "sns_usage": character_data.sns_usage,
-        "daily_schedule": character_data.daily_schedule,
-        "concerns": character_data.concerns,
-        "needs": character_data.needs,
-        "favorite_brands": character_data.favorite_brands,
-        "favorite_media": character_data.favorite_media,
-        "relationships": character_data.relationships,
-        "recent_events": character_data.recent_events,
-        "service_title": service_title,
-        "service_data": service_data
-    })
-    
-    synthesize_prompt = ChatPromptTemplate.from_template(
-        template="""
-            あなたは{name}です。プロフィールは以下の通りです。
-            名前: {name}
-            年齢: {age}歳
-            性別: {sex}
-            居住地: {residence}
-            住居情報: {housing}
-            職業・役職: {job}
-            会社規模: {company_size}
-            年収: {salary}
-            学歴: {educational_background}
-            家族構成: {family_structure}
-            価値観・人生観: {values}
-            ライフスタイル: {lifestyle}
-            趣味・嗜好: {hobbies}
-            目標・理想: {goals}
-            購買行動: {purchasing_behavior}
-            情報収集方法: {information_sources}
-            使用デバイス: {devices}
-            SNS利用状況: {sns_usage}
-            日課・タイムスケジュール: {daily_schedule}
-            悩み: {concerns}
-            解決したいこと: {needs}
-            好きなブランドや商品: {favorite_brands}
-            よく見る映画・動画チャンネル: {favorite_media}
-            人間関係: {relationships}
-            最近の出来事やエピソード: {recent_events}
-            
-            あなたは{service_title}に対して、偏った2つの感想を抱きました。この2つの感想を総合して、より説得力のある意見を500字程度で作成してください。
-            プロフィールを元に、主観的な視点を含めてください。また、意見が肯定、否定のどちらかに偏っても構いません。
-            肯定的意見: {positive}
-            否定的意見: {negative}
-        """
-    )
-    
-    synthesize_chain = synthesize_prompt | model | output_parser
-    return_data = synthesize_chain.invoke({
-        "name": character_data.name,
-        "age": character_data.age,
-        "sex": character_data.sex,
-        "residence": character_data.residence,
-        "housing": character_data.housing,
-        "job": character_data.job,
-        "company_size": character_data.company_size,
-        "salary": character_data.salary,
-        "educational_background": character_data.educational_background,
-        "family_structure": character_data.family_structure,
-        "values": character_data.values,
-        "lifestyle": character_data.lifestyle,
-        "hobbies": character_data.hobbies,
-        "goals": character_data.goals,
-        "purchasing_behavior": character_data.purchasing_behavior,
-        "information_sources": character_data.information_sources,
-        "devices": character_data.devices,
-        "sns_usage": character_data.sns_usage,
-        "daily_schedule": character_data.daily_schedule,
-        "concerns": character_data.concerns,
-        "needs": character_data.needs,
-        "favorite_brands": character_data.favorite_brands,
-        "favorite_media": character_data.favorite_media,
-        "relationships": character_data.relationships,
-        "recent_events": character_data.recent_events,
-        "service_title": service_title,
-        "positive": positive_chain_output,
-        "negative": negative_chain_output
-        })
-    return return_data
-
-def remake_service(service_data, persona_list):
-    
-    output_parser = StrOutputParser()
-    
-    persona_summerize_prompt = ChatPromptTemplate.from_template(
-        template="""
-            次のユーザーの意見を500字程度にまとめてください。
-            ユーザーの意見: {persona}
-        """
-    )
-    
-    persona_summerize_chain = persona_summerize_prompt | model | output_parser
-    persona_summerize = persona_summerize_chain.invoke({"persona": "\n".join(persona_list)})
-    
-    persona_remake_prompt = ChatPromptTemplate.from_template(
-        template="""
-            次のユーザーの意見の要約を元に、サービスを改良してください。
-            元のサービス要件の形式を必ず守りなさい。必要な文言のみ出力しなさい。
-            ユーザーの意見: {persona}
-            サービス要件: {service_data}
-        """
-    )
-    
-    chain = persona_remake_prompt | model | output_parser
-    return_data = chain.invoke({"persona": persona_summerize, "service_data": service_data})
-    return return_data
-
-def opinion_maker(character_data: Character, opinion):
-    output_parser = PydanticOutputParser(pydantic_object=Opinion)
-    format_instructions = output_parser.get_format_instructions()
-    
-    opinion_prompt = ChatPromptTemplate.from_template(
-        template="""
-            あなたは{name}です。プロフィールは以下の通りです。
-            名前: {name}
-            年齢: {age}歳
-            性別: {sex}
-            居住地: {residence}
-            住居情報: {housing}
-            職業・役職: {job}
-            会社規模: {company_size}
-            年収: {salary}
-            学歴: {educational_background}
-            家族構成: {family_structure}
-            価値観・人生観: {values}
-            ライフスタイル: {lifestyle}
-            趣味・嗜好: {hobbies}
-            目標・理想: {goals}
-            購買行動: {purchasing_behavior}
-            情報収集方法: {information_sources}
-            使用デバイス: {devices}
-            SNS利用状況: {sns_usage}
-            日課・タイムスケジュール: {daily_schedule}
-            悩み: {concerns}
-            解決したいこと: {needs}
-            好きなブランドや商品: {favorite_brands}
-            よく見る映画・動画チャンネル: {favorite_media}
-            人間関係: {relationships}
-            最近の出来事やエピソード: {recent_events}
-            
-            あなたは{service_title}というサービスに対して、以下の感想を持っています。
-            この感想を元に、以下の要件を満たすような意見を作成してください。
-            感想: {opinion}
-            
-            {format_instructions}
-        """
-    )
-    
-    prompt_with_format_instructions = opinion_prompt.partial(format_instructions=format_instructions)
-    
-    chain = prompt_with_format_instructions | model | output_parser
-    for _ in range(3):
-        try:
-            opinion_data = chain.invoke({
-                "name": character_data.name,
-                "age": character_data.age,
-                "sex": character_data.sex,
-                "residence": character_data.residence,
-                "housing": character_data.housing,
-                "job": character_data.job,
-                "company_size": character_data.company_size,
-                "salary": character_data.salary,
-                "educational_background": character_data.educational_background,
-                "family_structure": character_data.family_structure,
-                "values": character_data.values,
-                "lifestyle": character_data.lifestyle,
-                "hobbies": character_data.hobbies,
-                "goals": character_data.goals,
-                "purchasing_behavior": character_data.purchasing_behavior,
-                "information_sources": character_data.information_sources,
-                "devices": character_data.devices,
-                "sns_usage": character_data.sns_usage,
-                "daily_schedule": character_data.daily_schedule,
-                "concerns": character_data.concerns,
-                "needs": character_data.needs,
-                "favorite_brands": character_data.favorite_brands,
-                "favorite_media": character_data.favorite_media,
-                "relationships": character_data.relationships,
-                "recent_events": character_data.recent_events,
-                "service_title": service_title,
-                "opinion": opinion,
-                "format_instructions": format_instructions
-            })
-            return opinion_data
-        except Exception as e:
-            st.warning(f"有効なデータの生成に失敗しました。再試行します。エラー: {e}")
-            time.sleep(5)
-            
-    st.error("有効なデータの生成に失敗しました。試行回数を変更し、再度実行してください。")
-    return None
+    # グラフをクリアして再描画
+    fig, ax = plt.subplots()
+    names, levels = zip(*graph_data)
+    ax.bar(names, levels)
+    ax.set_title("サービスの需要レベル", fontproperties=font_prop)
+    ax.set_xlabel("人物名", fontproperties=font_prop)
+    ax.set_ylabel("需要レベル", fontproperties=font_prop)
+    graph_placeholder.pyplot(fig)
 
 st.set_page_config(page_title="ペルソナ生成", layout="centered")
 
@@ -468,15 +93,19 @@ with st.form("persona_form"):
         age_range_end = st.selectbox("ターゲットの年代（終了）", [str(i) for i in range(10, 101, 10)])
         
     number_of_people = st.number_input("生成する人数", min_value=1, max_value=10, value=1)
+    use_local = st.checkbox("ローカルモデルを使用する", value=True)
     submitted = st.form_submit_button("ペルソナ生成")
+    
+    graph_placeholder = st.empty()
     
 if submitted:
     people_list = []
     persona_list = []
     opinion_list = []
     for i in range(number_of_people):
-        person_model = generate_human_model(gender, age_range_start, age_range_end)
+        person_model = GenerateHumanModel(gender, age_range_start, age_range_end, use_local)
         if person_model is None:
+            st.error("有効な人間モデルの生成に失敗しました。")
             break
         people_list.append(person_model)
         with st.expander(f"生成された人間モデル: {person_model.name}", expanded=False):
@@ -508,13 +137,18 @@ if submitted:
                 * 最近の出来事やエピソード: {person_model.recent_events}
             """
             )
-        persona_data = generate_persona(service_title, service_req, person_model)
+        persona_data = GenerateComment(service_title, service_req, person_model, use_local)
         persona_list.append(persona_data)
         
         with st.expander(f"生成されたコメント", expanded=False):
             st.success(persona_data)
         
-        opinion_data = opinion_maker(person_model, persona_data)
+        opinion_data = OpinionSummerizer(service_title, person_model, persona_data, use_local)
+        
+        if opinion_data is None:
+            st.error("有効なデータの生成に失敗しました。試行回数を変更し、再度実行してください。")
+            break
+        
         opinion_list.append(opinion_data)
         st.markdown(f"""
             ## 意見生成完了
@@ -524,10 +158,12 @@ if submitted:
         st.markdown(f"""
             * サービスの需要レベル: {opinion_data.want_level}
             * 理由: {opinion_data.reason}""")
+        update_graph(person_model, opinion_data)
         st.write("------------")
-        time.sleep(30)
+        if not use_local:
+            time.sleep(30)
         
-    remake_survice_data = remake_service(service_req, persona_list)
+    remake_survice_data = SuggestBusinessPlan(service_req, persona_list, use_local)
     st.markdown(f"""
         ## サービス改良完了
         ### 改良されたサービス要件"""
