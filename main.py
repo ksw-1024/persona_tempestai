@@ -161,8 +161,20 @@ if submitted:
         update_graph(person_model, opinion_data)
         st.write("------------")
         if not use_local:
-            time.sleep(30)
-        
+            waiting_text = "I am preparing to work on..."
+            waiting_bar = st.progress(0, text=waiting_text)
+            
+            percent_complete = 0.0
+            total_count = 30
+            
+            for _ in range(total_count):
+                percent_complete += 1 / total_count
+                if percent_complete <= 1:
+                    waiting_bar.progress(percent_complete, text=waiting_text)
+                time.sleep(1)
+            
+            waiting_bar.empty()
+                    
     remake_survice_data = SuggestBusinessPlan(service_req, persona_list, use_local)
     st.markdown(f"""
         ## サービス改良完了
