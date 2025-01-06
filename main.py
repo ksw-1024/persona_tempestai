@@ -7,8 +7,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.output_parsers import StrOutputParser
 
-from langchain_core.runnables import RunnableParallel
-
 import google.generativeai as genai
 from langchain_openai import ChatOpenAI
 
@@ -108,7 +106,7 @@ def generate_persona(service_title, service_data, character_data: Character):
     
     synthesize_prompt = ChatPromptTemplate.from_template(
         template="""
-            あなたは{name}です。偏った２つの意見を述べています。この２つの意見を総合して、あなたの意見を述べてください。
+            あなたは{name}です。偏った２つの意見を述べています。この２つの意見を総合して、あなたの意見を500字程度で書き直してください。
             楽観的意見: {positive}
             悲観的意見: {negative}
         """
@@ -186,7 +184,7 @@ example_service_req = """## **1. サービス概要**
 - サブスクリプション特典（割引、スキップ・解約自由）。"""
 
 with st.form("persona_form"):
-    service_title = st.text_input("サービスタイトル", value="うんたらサービス")
+    service_title = st.text_input("サービスタイトル", value="フラデリ")
     service_req = st.text_area("サービス要件", value=example_service_req, height=400)
     gender = st.selectbox("ターゲットの性別", ["男性", "女性", "その他", "男女どちらでも"])
     age_range = st.multiselect("ターゲットの年代", [str(i) for i in range(10, 101, 10)])
@@ -221,7 +219,7 @@ with st.form("persona_form"):
         remake_survice_data = remake_service(service_req, persona_data)
         st.markdown(f"""
             ## サービス改良完了
-            ### 改良されたサービス要件\n\n
-            {remake_survice_data}
+            ### 改良されたサービス要件
         """
         )
+        st.markdown(remake_survice_data)
