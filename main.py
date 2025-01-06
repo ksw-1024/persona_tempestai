@@ -16,14 +16,12 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=GOOGLE_API_KEY)
 
-model = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=1)
+model = ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp", temperature=1)
 # model  = ChatOpenAI(
 #     base_url="http://localhost:11434/v1",
 #     model="llama-3.3-70b",
 #     api_key="not required",
-#     temperature=1,
-# ).bind(
-#     response_format={"type": "json_object"},
+#     temperature=0,
 # )
 
 class Character(BaseModel):
@@ -32,7 +30,7 @@ class Character(BaseModel):
     sex: str = Field(description="性別")
     height: int = Field(description="身長")
     weight: int = Field(description="体重")
-    place: str = Field(description="出身地")
+    place: str = Field(description="住んでいる市区町村")
     job: str = Field(description="職業")
     hobby: str = Field(description="趣味")
     personality: str = Field(description="性格")
@@ -45,7 +43,7 @@ def generate_human_model(gender, age_range):
 
     prompt = ChatPromptTemplate.from_template(
         template="""
-            あなたは超次元的存在であり、人間を生み出す事ができる存在です。次の条件を満たした人間モデルを生成してください。\n\n年齢: {age}代\n性別: {gender}\n\n{format_instructions}
+            あなたは超次元的存在であり、人間を生み出す事ができる存在です。次の条件を満たした日本人の人間モデルを1人のみ生成してください。なるべく多種多様な人間を生み出す努力をしてください。\n\n年齢: {age}代\n性別: {gender}\n\n{format_instructions}
         """
     )
     
@@ -53,10 +51,11 @@ def generate_human_model(gender, age_range):
     
     chain = prompt_with_format_instructions | model | output_parser
     human_model = chain.invoke({"age": ", ".join(age_range), "gender": gender})
+    
     return human_model
 
 def generate_persona(service_title, service_data, character_data: Character):
-    prompt = ChatPromptTemplate.from_template(
+    positive_prompt = ChatPromptTemplate.from_template(
         template="""
             あなたは{name}です。プロフィールは以下の通りです。
             名前: {name}
@@ -70,7 +69,27 @@ def generate_persona(service_title, service_data, character_data: Character):
             性格: {personality}
             年収: {salary}
             
-            あなたは{service_title}のユーザーです。サービスに関する感想を述べてください。口調なども含めて、自由に書いてください。出来る限り批判的に書いてください。
+            あなたは{service_title}のユーザーです。サービスに関する感想を述べてください。口調なども含めて、自由に書いてください。出来る限り肯定的に書いてください。
+            ただし、要件以外についてのコメントは控えてください。
+            {service_title}の要件: {service_data}
+        """
+    )
+    
+    negative_prompt = ChatPromptTemplate.from_template(
+        template="""
+            あなたは{name}です。プロフィールは以下の通りです。
+            名前: {name}
+            年齢: {age}歳
+            性別: {sex}
+            身長: {height}cm
+            体重: {weight}kg
+            出身地: {place}
+            職業: {job}
+            趣味: {hobby}
+            性格: {personality}
+            年収: {salary}
+            
+            あなたは{service_title}のユーザーです。サービスに関する感想を述べてください。口調なども含めて、自由に書いてください。出来る限り否定的に書いてください。
             ただし、要件以外についてのコメントは控えてください。
             {service_title}の要件: {service_data}
         """
@@ -78,8 +97,39 @@ def generate_persona(service_title, service_data, character_data: Character):
     
     output_parser = StrOutputParser()
     
+    positive_chain = positive_prompt | model | output_parser
+    positive_chain_output = positive_chain.invoke({"name": character_data.name, "age": character_data.age, "sex": character_data.age, "height": character_data.height, "weight": character_data.weight, "place": character_data.place, "job": character_data.job, "hobby": character_data.hobby, "personality": character_data.personality, "salary": character_data.salary, "service_title": service_title, "service_data": service_data})
+        
+    negative_chain = negative_prompt | model | output_parser
+    negative_chain_output = negative_chain.invoke({"name": character_data.name, "age": character_data.age, "sex": character_data.age, "height": character_data.height, "weight": character_data.weight, "place": character_data.place, "job": character_data.job, "hobby": character_data.hobby, "personality": character_data.personality, "salary": character_data.salary, "service_title": service_title, "service_data": service_data})
+
+    
+    synthesize_prompt = ChatPromptTemplate.from_template(
+        template="""
+            あなたは{name}です。偏った２つの意見を述べています。この２つの意見を総合して、あなたの意見を500字程度で書き直してください。
+            楽観的意見: {positive}
+            悲観的意見: {negative}
+        """
+    )
+    
+    synthesize_chain = synthesize_prompt | model | output_parser
+    return_data = synthesize_chain.invoke({"name": character_data.name, "positive": positive_chain_output, "negative": negative_chain_output})
+    return return_data
+
+def remake_service(service_data, persona):
+    prompt = ChatPromptTemplate.from_template(
+        template="""
+            次のペルソナを元に、サービスを改良してください。
+            出力形式は、元のサービス要件と同じ形式で出力してください。
+            ペルソナ: {persona}
+            サービス要件: {service_data}
+        """
+    )
+    
+    output_parser = StrOutputParser()
+    
     chain = prompt | model | output_parser
-    return_data = chain.invoke({"name": character_data.name, "age": character_data.age, "sex": character_data.age, "height": character_data.height, "weight": character_data.weight, "place": character_data.place, "job": character_data.job, "hobby": character_data.hobby, "personality": character_data.personality, "salary": character_data.salary, "service_title": service_title, "service_data": service_data})
+    return_data = chain.invoke({"persona": persona, "service_data": service_data})
     return return_data
 
 st.set_page_config(page_title="ペルソナ生成", layout="centered")
@@ -134,14 +184,13 @@ example_service_req = """## **1. サービス概要**
 - サブスクリプション特典（割引、スキップ・解約自由）。"""
 
 with st.form("persona_form"):
-    service_title = st.text_input("サービスタイトル", value="うんたらサービス")
+    service_title = st.text_input("サービスタイトル", value="フラデリ")
     service_req = st.text_area("サービス要件", value=example_service_req, height=400)
-    gender = st.selectbox("ターゲットの性別", ["男性", "女性", "その他"])
+    gender = st.selectbox("ターゲットの性別", ["男性", "女性", "その他", "男女どちらでも"])
     age_range = st.multiselect("ターゲットの年代", [str(i) for i in range(10, 101, 10)])
     number_of_people = st.number_input("生成する人数", min_value=1, max_value=10, value=1)
     submitted = st.form_submit_button("ペルソナ生成")
     if submitted:
-        person_model = []
         for i in range(number_of_people):
             person_model = generate_human_model(gender, age_range)
             st.markdown(f"""
@@ -166,3 +215,11 @@ with st.form("persona_form"):
             """
             )
             st.success(persona_data)
+            
+        remake_survice_data = remake_service(service_req, persona_data)
+        st.markdown(f"""
+            ## サービス改良完了
+            ### 改良されたサービス要件
+        """
+        )
+        st.markdown(remake_survice_data)
