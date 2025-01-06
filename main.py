@@ -47,7 +47,7 @@ def generate_human_model(gender, age_range):
 
     prompt = ChatPromptTemplate.from_template(
         template="""
-            あなたは超次元的存在であり、人間を生み出す事ができる存在です。次の条件を満たした人間モデルを1人のみ生成してください。なるべく多種多様な人間を生み出す努力をしてください。\n\n年齢: {age}代\n性別: {gender}\n\n{format_instructions}
+            あなたは超次元的存在であり、人間を生み出す事ができる存在です。次の条件を満たした日本人の人間モデルを1人のみ生成してください。なるべく多種多様な人間を生み出す努力をしてください。\n\n年齢: {age}代\n性別: {gender}\n\n{format_instructions}
         """
     )
     
