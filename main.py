@@ -25,16 +25,40 @@ model = ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp", temperature=1)
 # )
 
 class Character(BaseModel):
-    name: str = Field(description="名前")
+    # 基本的な属性情報（デモグラフィック変数）
+    name: str = Field(description="氏名")
     age: int = Field(description="年齢")
     sex: str = Field(description="性別")
-    height: int = Field(description="身長")
-    weight: int = Field(description="体重")
-    place: str = Field(description="住んでいる市区町村")
-    job: str = Field(description="職業")
-    hobby: str = Field(description="趣味")
-    personality: str = Field(description="性格")
+    residence: str = Field(description="居住地")
+    housing: str = Field(description="住居情報")
+    job: str = Field(description="職業・役職")
+    company_size: str = Field(description="会社規模")
     salary: str = Field(description="年収")
+    educational_background: str = Field(description="学歴")
+    family_structure: str = Field(description="家族構成")
+    
+    # 心理的特性（サイコグラフィック変数）
+    values: str = Field(description="価値観・人生観")
+    lifestyle: str = Field(description="ライフスタイル")
+    hobbies: str = Field(description="趣味・嗜好")
+    goals: str = Field(description="目標・理想")
+    
+    # 行動特性（ビヘイビア変数）
+    purchasing_behavior: str = Field(description="購買行動")
+    information_sources: str = Field(description="情報収集方法")
+    devices: str = Field(description="使用デバイス")
+    sns_usage: str = Field(description="SNS利用状況")
+    daily_schedule: str = Field(description="日課・タイムスケジュール")
+    
+    # 現在の課題とニーズ
+    concerns: str = Field(description="悩み")
+    needs: str = Field(description="解決したいこと")
+    
+    # その他の詳細情報
+    favorite_brands: str = Field(description="好きなブランドや商品")
+    favorite_media: str = Field(description="よく見る映画・動画チャンネル")
+    relationships: str = Field(description="人間関係")
+    recent_events: str = Field(description="最近の出来事やエピソード")
 
 def generate_human_model(gender, age_range):
     
@@ -61,13 +85,28 @@ def generate_persona(service_title, service_data, character_data: Character):
             名前: {name}
             年齢: {age}歳
             性別: {sex}
-            身長: {height}cm
-            体重: {weight}kg
-            出身地: {place}
-            職業: {job}
-            趣味: {hobby}
-            性格: {personality}
+            居住地: {residence}
+            住居情報: {housing}
+            職業・役職: {job}
+            会社規模: {company_size}
             年収: {salary}
+            学歴: {educational_background}
+            家族構成: {family_structure}
+            価値観・人生観: {values}
+            ライフスタイル: {lifestyle}
+            趣味・嗜好: {hobbies}
+            目標・理想: {goals}
+            購買行動: {purchasing_behavior}
+            情報収集方法: {information_sources}
+            使用デバイス: {devices}
+            SNS利用状況: {sns_usage}
+            日課・タイムスケジュール: {daily_schedule}
+            悩み: {concerns}
+            解決したいこと: {needs}
+            好きなブランドや商品: {favorite_brands}
+            よく見る映画・動画チャンネル: {favorite_media}
+            人間関係: {relationships}
+            最近の出来事やエピソード: {recent_events}
             
             あなたは{service_title}のユーザーです。サービスに関する感想を述べてください。口調なども含めて、自由に書いてください。出来る限り肯定的に書いてください。
             ただし、要件以外についてのコメントは控えてください。
@@ -81,13 +120,28 @@ def generate_persona(service_title, service_data, character_data: Character):
             名前: {name}
             年齢: {age}歳
             性別: {sex}
-            身長: {height}cm
-            体重: {weight}kg
-            出身地: {place}
-            職業: {job}
-            趣味: {hobby}
-            性格: {personality}
+            居住地: {residence}
+            住居情報: {housing}
+            職業・役職: {job}
+            会社規模: {company_size}
             年収: {salary}
+            学歴: {educational_background}
+            家族構成: {family_structure}
+            価値観・人生観: {values}
+            ライフスタイル: {lifestyle}
+            趣味・嗜好: {hobbies}
+            目標・理想: {goals}
+            購買行動: {purchasing_behavior}
+            情報収集方法: {information_sources}
+            使用デバイス: {devices}
+            SNS利用状況: {sns_usage}
+            日課・タイムスケジュール: {daily_schedule}
+            悩み: {concerns}
+            解決したいこと: {needs}
+            好きなブランドや商品: {favorite_brands}
+            よく見る映画・動画チャンネル: {favorite_media}
+            人間関係: {relationships}
+            最近の出来事やエピソード: {recent_events}
             
             あなたは{service_title}のユーザーです。サービスに関する感想を述べてください。口調なども含めて、自由に書いてください。出来る限り否定的に書いてください。
             ただし、要件以外についてのコメントは控えてください。
@@ -98,15 +152,70 @@ def generate_persona(service_title, service_data, character_data: Character):
     output_parser = StrOutputParser()
     
     positive_chain = positive_prompt | model | output_parser
-    positive_chain_output = positive_chain.invoke({"name": character_data.name, "age": character_data.age, "sex": character_data.age, "height": character_data.height, "weight": character_data.weight, "place": character_data.place, "job": character_data.job, "hobby": character_data.hobby, "personality": character_data.personality, "salary": character_data.salary, "service_title": service_title, "service_data": service_data})
-        
+    positive_chain_output = positive_chain.invoke({
+        "name": character_data.name,
+        "age": character_data.age,
+        "sex": character_data.sex,
+        "residence": character_data.residence,
+        "housing": character_data.housing,
+        "job": character_data.job,
+        "company_size": character_data.company_size,
+        "salary": character_data.salary,
+        "educational_background": character_data.educational_background,
+        "family_structure": character_data.family_structure,
+        "values": character_data.values,
+        "lifestyle": character_data.lifestyle,
+        "hobbies": character_data.hobbies,
+        "goals": character_data.goals,
+        "purchasing_behavior": character_data.purchasing_behavior,
+        "information_sources": character_data.information_sources,
+        "devices": character_data.devices,
+        "sns_usage": character_data.sns_usage,
+        "daily_schedule": character_data.daily_schedule,
+        "concerns": character_data.concerns,
+        "needs": character_data.needs,
+        "favorite_brands": character_data.favorite_brands,
+        "favorite_media": character_data.favorite_media,
+        "relationships": character_data.relationships,
+        "recent_events": character_data.recent_events,
+        "service_title": service_title,
+        "service_data": service_data
+    })
+       
     negative_chain = negative_prompt | model | output_parser
-    negative_chain_output = negative_chain.invoke({"name": character_data.name, "age": character_data.age, "sex": character_data.age, "height": character_data.height, "weight": character_data.weight, "place": character_data.place, "job": character_data.job, "hobby": character_data.hobby, "personality": character_data.personality, "salary": character_data.salary, "service_title": service_title, "service_data": service_data})
-
+    negative_chain_output = negative_chain.invoke({
+        "name": character_data.name,
+        "age": character_data.age,
+        "sex": character_data.sex,
+        "residence": character_data.residence,
+        "housing": character_data.housing,
+        "job": character_data.job,
+        "company_size": character_data.company_size,
+        "salary": character_data.salary,
+        "educational_background": character_data.educational_background,
+        "family_structure": character_data.family_structure,
+        "values": character_data.values,
+        "lifestyle": character_data.lifestyle,
+        "hobbies": character_data.hobbies,
+        "goals": character_data.goals,
+        "purchasing_behavior": character_data.purchasing_behavior,
+        "information_sources": character_data.information_sources,
+        "devices": character_data.devices,
+        "sns_usage": character_data.sns_usage,
+        "daily_schedule": character_data.daily_schedule,
+        "concerns": character_data.concerns,
+        "needs": character_data.needs,
+        "favorite_brands": character_data.favorite_brands,
+        "favorite_media": character_data.favorite_media,
+        "relationships": character_data.relationships,
+        "recent_events": character_data.recent_events,
+        "service_title": service_title,
+        "service_data": service_data
+    })
     
     synthesize_prompt = ChatPromptTemplate.from_template(
         template="""
-            あなたは{name}です。偏った２つの意見を述べています。この２つの意見を総合して、あなたの意見を500字程度で書き直してください。
+            あなたは{name}です。偏った2つの意見を述べています。この2つの意見を総合して、あなたの意見を500字程度で書き直してください。
             楽観的意見: {positive}
             悲観的意見: {negative}
         """
@@ -199,13 +308,28 @@ with st.form("persona_form"):
                 * 名前: {person_model.name}
                 * 年齢: {person_model.age}歳
                 * 性別: {person_model.sex}
-                * 身長: {person_model.height}cm
-                * 体重: {person_model.weight}kg
-                * 出身地: {person_model.place}
-                * 職業: {person_model.job}
-                * 趣味: {person_model.hobby}
-                * 性格: {person_model.personality}
+                * 居住地: {person_model.residence}
+                * 住居情報: {person_model.housing}
+                * 職業・役職: {person_model.job}
+                * 会社規模: {person_model.company_size}
                 * 年収: {person_model.salary}
+                * 学歴: {person_model.educational_background}
+                * 家族構成: {person_model.family_structure}
+                * 価値観・人生観: {person_model.values}
+                * ライフスタイル: {person_model.lifestyle}
+                * 趣味・嗜好: {person_model.hobbies}
+                * 目標・理想: {person_model.goals}
+                * 購買行動: {person_model.purchasing_behavior}
+                * 情報収集方法: {person_model.information_sources}
+                * 使用デバイス: {person_model.devices}
+                * SNS利用状況: {person_model.sns_usage}
+                * 日課・タイムスケジュール: {person_model.daily_schedule}
+                * 悩み: {person_model.concerns}
+                * 解決したいこと: {person_model.needs}
+                * 好きなブランドや商品: {person_model.favorite_brands}
+                * よく見る映画・動画チャンネル: {person_model.favorite_media}
+                * 人間関係: {person_model.relationships}
+                * 最近の出来事やエピソード: {person_model.recent_events}
             """
             )
             persona_data = generate_persona(service_title, service_req, person_model)
