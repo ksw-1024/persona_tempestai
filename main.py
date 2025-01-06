@@ -19,11 +19,11 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# model = GoogleGenerativeAI(model="gemini-2.0-flash-exp", temperature=1)
-model  = OllamaLLM(
-    model="llama-3-swallow-70b",
-    temperature=1,
-)
+model = GoogleGenerativeAI(model="gemini-2.0-flash-exp", temperature=1)
+# model  = OllamaLLM(
+#     model="llama-3-swallow-70b",
+#     temperature=1,
+# )
 
 class Character(BaseModel):
     # 基本的な属性情報（デモグラフィック変数）
