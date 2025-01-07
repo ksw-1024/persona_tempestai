@@ -178,7 +178,7 @@ if submitted:
     
     # ダウンロードボタンの作成
     st.download_button(
-        label="CSVファイルのダウンロード",
+        label="ヒューマンモデルファイルのダウンロード",
         data=csv_file,
         file_name="persona_data.csv",
         mime="text/csv"

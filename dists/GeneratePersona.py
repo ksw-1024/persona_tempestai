@@ -276,7 +276,7 @@ def GenerateComment(service_title, service_concept, service_customer, service_de
             人間関係: {relationships}
             最近の出来事やエピソード: {recent_events}
             
-            あなたは{service_title}に対して、偏った2つの感想を抱きました。この2つの感想を総合して、より説得力のある意見を500字程度で作成してください。
+            あなたは{service_title}のユーザーです。このサービスに対して、偏った2つの感想を抱きました。この2つの感想を参考にして、より説得力のある意見を500字程度で作成してください。
             プロフィールを元に、主観的な視点を含めてください。また、意見が肯定、否定のどちらかに偏っても構いません。
             肯定的意見: {positive}
             否定的意見: {negative}
