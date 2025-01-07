@@ -92,7 +92,7 @@ with st.form("persona_form"):
     with col2:
         age_range_end = st.selectbox("ターゲットの年代（終了）", [str(i) for i in range(10, 101, 10)])
         
-    number_of_people = st.number_input("生成する人数", min_value=1, max_value=10, value=1)
+    number_of_people = st.number_input("生成する人数", min_value=1, max_value=100, value=1)
     use_local = st.checkbox("ローカルモデルを使用する", value=True)
     submitted = st.form_submit_button("ペルソナ生成")
     
