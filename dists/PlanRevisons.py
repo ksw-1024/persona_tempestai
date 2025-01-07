@@ -10,6 +10,8 @@ from langchain_ollama.llms import OllamaLLM
 
 from pydantic import BaseModel, Field
 
+from .GetToken import CountToken
+
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=GOOGLE_API_KEY)
@@ -33,13 +35,11 @@ def SuggestBusinessPlan(service_concept, service_customer, service_description, 
     output_parser = StrOutputParser()
     
     persona_summerize_prompt = ChatPromptTemplate.from_template(
-        template="""
-            次のユーザーの意見を500字程度にまとめてください。
-            ユーザーの意見: {persona}
-        """
+        template="""次のユーザーの意見を500字程度にまとめてください。\nユーザーの意見: {persona}"""
     )
     
     persona_summerize_chain = persona_summerize_prompt | model | output_parser
+    print(f"全員の意見まとめ 入力トークン数: {CountToken(persona_summerize_prompt, {'persona': "\n".join(persona_list)})}")
     persona_summerize = persona_summerize_chain.invoke({"persona": "\n".join(persona_list)})
     
     persona_remake_prompt = ChatPromptTemplate.from_template(
@@ -71,5 +71,6 @@ def SuggestBusinessPlan(service_concept, service_customer, service_description, 
     )
     
     chain = persona_remake_prompt | model | output_parser
+    print(f"トークン数: {CountToken(persona_remake_prompt, {'persona': persona_summerize, 'service_concept': service_concept, 'service_customer': service_customer, 'survice_description': service_description, 'service_revenue': service_revenue})}")
     return_data = chain.invoke({"persona": persona_summerize, "service_concept": service_concept, "service_customer": service_customer, "survice_description": service_description, "service_revenue": service_revenue})
     return return_data

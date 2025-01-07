@@ -87,11 +87,11 @@ def GenerateHumanModel(gender, age_range_start, age_range_end, use_local):
     prompt_with_format_instructions = prompt.partial(format_instructions=format_instructions)
     
     chain = prompt_with_format_instructions | model | output_parser
-    print(f"トークン数: {CountToken(prompt_with_format_instructions, {"age": age_range_start + "〜" + age_range_end + "代", "gender": gender})}")
+    print(f"トークン数: {CountToken(prompt_with_format_instructions, {"age": age_range_start + "〜" + age_range_end, "gender": gender})}")
     
     for _ in range(3):
         try:
-            human_model = chain.invoke({"age": age_range_start + "〜" + age_range_end + "代", "gender": gender})
+            human_model = chain.invoke({"age": age_range_start + "〜" + age_range_end, "gender": gender})
             return human_model
         except Exception as e:
             print(f"人間モデルの生成に失敗しました。再試行します。エラー: {e}")
@@ -167,7 +167,7 @@ SNS利用状況: {sns_usage}
 人間関係: {relationships}
 最近の出来事やエピソード: {recent_events}
 
-あなたは{service_title}のユーザーです。サービスに関する感想を述べてください。口調なども含めて、自由に書いてください。出来る限り肯定的に書いてください。
+あなたは{service_title}のユーザーです。サービスに関する感想を200字程度で述べてください。プロフィールを元に口調などを調整し、主観的な意見を交えつつ、出来る限り肯定的に書いてください。
 ただし、要件以外についてのコメントは控えてください。
 
 ### 要件
@@ -205,7 +205,7 @@ SNS利用状況: {sns_usage}
 人間関係: {relationships}
 最近の出来事やエピソード: {recent_events}
 
-あなたは{service_title}のユーザーです。サービスに関する感想を述べてください。口調なども含めて、自由に書いてください。出来る限り否定的に書いてください。
+あなたは{service_title}のユーザーです。サービスに関する感想を200字程度で述べてください。プロフィールを元に口調などを調整し、主観的な意見を交えつつ、出来る限り否定的に書いてください。
 ただし、要件以外についてのコメントは控えてください。
 
 ### 要件
@@ -218,11 +218,11 @@ SNS利用状況: {sns_usage}
     output_parser = StrOutputParser()
     
     positive_chain = positive_prompt | model | output_parser
-    print(f"トークン数: {CountToken(positive_prompt, input_data)}")
+    print(f"ポジティブプロンプト 入力トークン数: {CountToken(positive_prompt, input_data)}")
     positive_chain_output = positive_chain.invoke(input_data)
        
     negative_chain = negative_prompt | model | output_parser
-    print(f"トークン数: {CountToken(negative_prompt, input_data)}")
+    print(f"ネガティブプロンプト 入力トークン数: {CountToken(negative_prompt, input_data)}")
     negative_chain_output = negative_chain.invoke(input_data)
     
     synthesize_prompt = ChatPromptTemplate.from_template(
@@ -253,14 +253,14 @@ SNS利用状況: {sns_usage}
 人間関係: {relationships}
 最近の出来事やエピソード: {recent_events}
 
-あなたは{service_title}のユーザーです。このサービスに対して、偏った2つの感想を抱きました。この2つの感想を参考にして、より説得力のある意見を500字程度で作成してください。
+あなたは{service_title}のユーザーです。このサービスに対して、偏った2つの感想を抱きました。この2つの感想を参考にして、より説得力のある意見を200字程度で作成してください。
 プロフィールを元に、主観的な視点を含めてください。また、意見が肯定、否定のどちらかに偏っても構いません。
 肯定的意見: {positive}
 否定的意見: {negative}"""
     )
     
     synthesize_chain = synthesize_prompt | model | output_parser
-    print(f"トークン数: {CountToken(synthesize_prompt, {**input_data, **{'positive': positive_chain_output, 'negative': negative_chain_output}})}")
+    print(f"総合感想プロンプト 入力トークン数: {CountToken(synthesize_prompt, {**input_data, **{'positive': positive_chain_output, 'negative': negative_chain_output}})}")
     return_data = synthesize_chain.invoke({
         **input_data,
         **{
@@ -317,6 +317,36 @@ SNS利用状況: {sns_usage}
     )
     
     prompt_with_format_instructions = opinion_prompt.partial(format_instructions=format_instructions)
+    print(f"まとめ 入力トークン数: {CountToken(prompt_with_format_instructions, {
+                "name": character_data.name,
+                "age": character_data.age,
+                "gender": character_data.gender,
+                "residence": character_data.residence,
+                "housing": character_data.housing,
+                "job": character_data.job,
+                "company_size": character_data.company_size,
+                "salary": character_data.salary,
+                "educational_background": character_data.educational_background,
+                "family_structure": character_data.family_structure,
+                "values": character_data.values,
+                "lifestyle": character_data.lifestyle,
+                "hobbies": character_data.hobbies,
+                "goals": character_data.goals,
+                "purchasing_behavior": character_data.purchasing_behavior,
+                "information_sources": character_data.information_sources,
+                "devices": character_data.devices,
+                "sns_usage": character_data.sns_usage,
+                "daily_schedule": character_data.daily_schedule,
+                "concerns": character_data.concerns,
+                "needs": character_data.needs,
+                "favorite_brands": character_data.favorite_brands,
+                "favorite_media": character_data.favorite_media,
+                "relationships": character_data.relationships,
+                "recent_events": character_data.recent_events,
+                "service_title": service_title,
+                "opinion": opinion,
+                "format_instructions": format_instructions
+            })}")
     
     chain = prompt_with_format_instructions | model | output_parser
     for _ in range(3):

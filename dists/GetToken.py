@@ -12,8 +12,8 @@ def CountToken(prompt_template: ChatPromptTemplate, input_data: dict) -> int:
         int: トークン数。
     """
     # ChatPromptTemplateを文字列に変換
-    prompt_string = str(prompt_template.format(input_data))
-    print(prompt_string)
+    prompt_string = str(prompt_template.format(**input_data))
+    # print(prompt_string)
 
     # TikTokenのエンコーダーを初期化 (cl100k_baseはOpenAIのモデルで使用される一般的なエンコーディング)
     encoder = tiktoken.get_encoding("cl100k_base")
