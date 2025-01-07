@@ -26,7 +26,7 @@ class Character(BaseModel):
     # 基本的な属性情報（デモグラフィック変数）
     name: str = Field(description="氏名(フルネーム)")
     age: int = Field(description="年齢")
-    sex: str = Field(description="性別")
+    gender: str = Field(description="性別")
     residence: str = Field(description="居住地")
     housing: str = Field(description="住居情報")
     job: str = Field(description="職業・役職")
@@ -102,7 +102,7 @@ def GenerateComment(service_title, service_data, character_data: Character, use_
             あなたは{name}です。プロフィールは以下の通りです。
             名前: {name}
             年齢: {age}歳
-            性別: {sex}
+            性別: {gender}
             居住地: {residence}
             住居情報: {housing}
             職業・役職: {job}
@@ -137,7 +137,7 @@ def GenerateComment(service_title, service_data, character_data: Character, use_
             あなたは{name}です。プロフィールは以下の通りです。
             名前: {name}
             年齢: {age}歳
-            性別: {sex}
+            性別: {gender}
             居住地: {residence}
             住居情報: {housing}
             職業・役職: {job}
@@ -173,7 +173,7 @@ def GenerateComment(service_title, service_data, character_data: Character, use_
     positive_chain_output = positive_chain.invoke({
         "name": character_data.name,
         "age": character_data.age,
-        "sex": character_data.sex,
+        "gender": character_data.gender,
         "residence": character_data.residence,
         "housing": character_data.housing,
         "job": character_data.job,
@@ -204,7 +204,7 @@ def GenerateComment(service_title, service_data, character_data: Character, use_
     negative_chain_output = negative_chain.invoke({
         "name": character_data.name,
         "age": character_data.age,
-        "sex": character_data.sex,
+        "gender": character_data.gender,
         "residence": character_data.residence,
         "housing": character_data.housing,
         "job": character_data.job,
@@ -236,7 +236,7 @@ def GenerateComment(service_title, service_data, character_data: Character, use_
             あなたは{name}です。プロフィールは以下の通りです。
             名前: {name}
             年齢: {age}歳
-            性別: {sex}
+            性別: {gender}
             居住地: {residence}
             住居情報: {housing}
             職業・役職: {job}
@@ -271,7 +271,7 @@ def GenerateComment(service_title, service_data, character_data: Character, use_
     return_data = synthesize_chain.invoke({
         "name": character_data.name,
         "age": character_data.age,
-        "sex": character_data.sex,
+        "gender": character_data.gender,
         "residence": character_data.residence,
         "housing": character_data.housing,
         "job": character_data.job,
@@ -316,7 +316,7 @@ def OpinionSummerizer(service_title, character_data: Character, opinion, use_loc
             あなたは{name}です。プロフィールは以下の通りです。
             名前: {name}
             年齢: {age}歳
-            性別: {sex}
+            性別: {gender}
             居住地: {residence}
             住居情報: {housing}
             職業・役職: {job}
@@ -356,7 +356,7 @@ def OpinionSummerizer(service_title, character_data: Character, opinion, use_loc
             opinion_data = chain.invoke({
                 "name": character_data.name,
                 "age": character_data.age,
-                "sex": character_data.sex,
+                "gender": character_data.gender,
                 "residence": character_data.residence,
                 "housing": character_data.housing,
                 "job": character_data.job,

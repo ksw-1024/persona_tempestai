@@ -112,7 +112,7 @@ if submitted:
             st.markdown(f"""
                 * 名前: {person_model.name}
                 * 年齢: {person_model.age}歳
-                * 性別: {person_model.sex}
+                * 性別: {person_model.gender}
                 * 居住地: {person_model.residence}
                 * 住居情報: {person_model.housing}
                 * 職業・役職: {person_model.job}
@@ -187,7 +187,7 @@ if submitted:
     # データフレームの作成
     data = []
     for person, persona, opinion in zip(people_list, persona_list, opinion_list):
-        data.append([person.name, person.age, person.sex, person.residence, person.housing, person.job, person.company_size, person.salary, person.educational_background, person.family_structure, person.values, person.lifestyle, person.hobbies, person.goals, person.purchasing_behavior, person.information_sources, person.devices, person.sns_usage, person.daily_schedule, person.concerns, person.needs, person.favorite_brands, person.favorite_media, person.relationships, person.recent_events, persona, opinion.want_level, opinion.reason])
+        data.append([person.name, person.age, person.gender, person.residence, person.housing, person.job, person.company_size, person.salary, person.educational_background, person.family_structure, person.values, person.lifestyle, person.hobbies, person.goals, person.purchasing_behavior, person.information_sources, person.devices, person.sns_usage, person.daily_schedule, person.concerns, person.needs, person.favorite_brands, person.favorite_media, person.relationships, person.recent_events, persona, opinion.want_level, opinion.reason])
         
     df = pd.DataFrame(data, columns=["名前", "年齢", "性別", "居住地", "住居情報", "職業・役職", "会社規模", "年収", "学歴", "家族構成", "価値観・人生観", "ライフスタイル", "趣味・嗜好", "目標・理想", "購買行動", "情報収集方法", "使用デバイス", "SNS利用状況", "日課・タイムスケジュール", "悩み", "解決したいこと", "好きなブランドや商品", "よく見る映画・動画チャンネル", "人間関係", "最近の出来事やエピソード", "生成されたコメント", "サービスの需要レベル", "理由"])
     
