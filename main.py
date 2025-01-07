@@ -38,11 +38,11 @@ st.markdown("""
 
 st.markdown('<div class="big-title">ペルソナ作成</div>', unsafe_allow_html=True)
 
-example_service_title = "フラデリ"
-example_service_concept = """家庭やオフィスに手軽に花を取り入れることで、生活空間の彩りと癒しを提供。"""
-example_service_customer = """花屋に行く時間がないが花を楽しみたい人。\n季節感やインテリアとして花を取り入れたい人。\nギフト用途で利用したい人。"""
-example_service_description = """フラデリは、家庭やオフィスに手軽に花を取り入れることで、生活空間の彩りと癒しを提供するサービスです。配送プランは、配送頻度や配送方法を柔軟に選択でき、料金プランは初心者向けから高級プランまで幅広く提供しています。カスタマイズオプションや付加価値サービスも充実しており、幅広いニーズに対応しています。"""
-example_service_revenue = """初心者向け: 小型ブーケで550円～1,000円/回（送料別）。\n中級者向け: ボリュームがある花束で1,500円～2,500円/回。\n高級プラン: 特別アレンジメントで3,000円以上。"""
+example_service_title = "オトナの趣味ラボ"
+example_service_concept = """中年男性向けに、趣味を通じて人生の充実感を提供するコミュニティ型サービス。"""
+example_service_customer = """仕事や家庭で忙しいが、自分の時間を持ちたい中年男性。\n新しい趣味を始めたいが、何から始めればいいかわからない人。\n同じ趣味を持つ仲間と交流したい人。"""
+example_service_description = """オトナの趣味ラボは、中年男性が新しい趣味を見つけたり、既存の趣味を深めたりすることで、日常に充実感と楽しみを提供するサービスです。オンラインとオフラインでのイベントやワークショップを通じて、さまざまな趣味（アウトドア、料理、DIY、写真、音楽など）を体験できます。また、専用アプリで趣味に関する情報共有や仲間との交流が可能です。初心者向けガイドや専門家によるアドバイスも充実しており、誰でも気軽に参加できます。"""
+example_service_revenue = """基本プラン: 月額1,500円でオンラインコンテンツやコミュニティ利用権。\nプレミアムプラン: 月額3,500円でオンライン+オフラインイベント参加権。\n個別セッション: 専門家による1対1指導で1回5,000円～10,000円。"""
 
 with st.form("persona_form"):
     service_title = st.text_input("サービスタイトル", value=example_service_title)
@@ -59,7 +59,7 @@ with st.form("persona_form"):
     with col2:
         age_range_end = st.selectbox("ターゲットの年代（終了）", [str(i) for i in range(10, 101, 10)])
         
-    number_of_people = st.number_input("生成する人数", min_value=1, max_value=100, value=1)
+    number_of_people = st.number_input("生成する人数", min_value=1, max_value=3, value=1)
     use_local = st.checkbox("ローカルモデルを使用する", value=False)
     submitted = st.form_submit_button("ペルソナ生成")
     
@@ -119,8 +119,7 @@ if submitted:
         opinion_list.append(opinion_data)
         st.markdown(f"""
             ## 意見生成完了
-            ### 生成された意見
-        """
+            ### 生成された意見"""
         )
         st.markdown(f"""
             * サービスの需要レベル: {opinion_data.want_level}

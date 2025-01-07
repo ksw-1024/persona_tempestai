@@ -43,7 +43,7 @@ def SuggestBusinessPlan(service_concept, service_customer, service_description, 
     persona_summerize = persona_summerize_chain.invoke({"persona": "\n".join(persona_list)})
     
     persona_remake_prompt = ChatPromptTemplate.from_template(
-        template="""次のユーザーの意見の要約を元に、サービスを改良してください。
+        template="""あなたは最高の事業開発部の部長です。次のユーザーの意見の要約を元に、サービスを改良してください。
 元のサービス要件の形式を必ず守りなさい。必要な文言のみ出力しなさい。
 また、一番下には改良した部分を簡潔にまとめなさい。
 ---
@@ -53,6 +53,7 @@ def SuggestBusinessPlan(service_concept, service_customer, service_description, 
 * ここに改良した部分を記述
 * ここに改良した部分を記述
 * ここに改良した部分を記述
+---
 
 ユーザーの意見: {persona}
 

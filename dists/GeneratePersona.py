@@ -8,7 +8,7 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain_core.output_parsers import StrOutputParser
 
 import google.generativeai as genai
-from langchain_google_genai import GoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_ollama.llms import OllamaLLM
 
 from pydantic import BaseModel, Field
@@ -21,11 +21,11 @@ genai.configure(api_key=GOOGLE_API_KEY)
 
 unique_id = uuid4().hex[0:8]
 os.environ["LANGCHAIN_TRACING_V2"] = os.getenv("LANGCHAIN_TRACING_V2")
-os.environ["LANGCHAIN_PROJECT"] = os.getenv("LANGCHAIN_PROJECT")
+os.environ["LANGCHAIN_PROJECT"] = os.getenv("LANGCHAIN_PROJECT") + "-" + unique_id
 os.environ["LANGCHAIN_ENDPOINT"] = os.getenv("LANGCHAIN_ENDPOINT")
 os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
 
-model_gemini = GoogleGenerativeAI(model="gemini-2.0-flash-exp", temperature=1)
+model_gemini = ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp", temperature=1)
 model_local  = OllamaLLM(
     model="qwen2-5-72b",
     temperature=1,
@@ -87,7 +87,7 @@ def GenerateHumanModel(gender, age_range_start, age_range_end, use_local):
     prompt_with_format_instructions = prompt.partial(format_instructions=format_instructions)
     
     chain = prompt_with_format_instructions | model | output_parser
-    print(f"トークン数: {CountToken(prompt_with_format_instructions, {"age": age_range_start + "〜" + age_range_end, "gender": gender})}")
+    print(f"人間モデル生成 入力トークン数: {CountToken(prompt_with_format_instructions, {"age": age_range_start + "〜" + age_range_end, "gender": gender})}")
     
     for _ in range(3):
         try:
@@ -167,7 +167,7 @@ SNS利用状況: {sns_usage}
 人間関係: {relationships}
 最近の出来事やエピソード: {recent_events}
 
-あなたは{service_title}のユーザーです。サービスに関する感想を200字程度で述べてください。プロフィールを元に口調などを調整し、主観的な意見を交えつつ、出来る限り肯定的に書いてください。
+あなたは{service_title}のユーザーです。サービスに関する感想を400字程度で述べてください。プロフィールを元に口調などを調整し、主観的な意見を交えつつ、出来る限り肯定的に書いてください。
 ただし、要件以外についてのコメントは控えてください。
 
 ### 要件
@@ -205,7 +205,7 @@ SNS利用状況: {sns_usage}
 人間関係: {relationships}
 最近の出来事やエピソード: {recent_events}
 
-あなたは{service_title}のユーザーです。サービスに関する感想を200字程度で述べてください。プロフィールを元に口調などを調整し、主観的な意見を交えつつ、出来る限り否定的に書いてください。
+あなたは{service_title}のユーザーです。サービスに関する感想を400字程度で述べてください。プロフィールを元に口調などを調整し、主観的な意見を交えつつ、出来る限り否定的に書いてください。
 ただし、要件以外についてのコメントは控えてください。
 
 ### 要件
