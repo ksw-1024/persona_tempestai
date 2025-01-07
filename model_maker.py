@@ -28,27 +28,27 @@ st.markdown("""
 st.markdown('<div class="big-title">人間モデル生成</div>', unsafe_allow_html=True)
 
 with st.form("model_form"):
-    gender = st.selectbox("性別", ["男性", "女性", "その他", "男女どちらでも"])
-    
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        age_range_start = st.selectbox("年代（開始）", [str(i) for i in range(10, 101, 10)])
-    with col2:
-        age_range_end = st.selectbox("年代（終了）", [str(i) for i in range(10, 101, 10)])
-        
-    use_local = st.checkbox("ローカルモデルを使用する", value=True)
+    use_local = st.checkbox("ローカルモデルを使用する", value=False)
     submitted = st.form_submit_button("モデル生成")
 
 if submitted:
     people_list = []
     for _ in range(10):
         for i in range(1, 11):
-            person_model = GenerateHumanModel(gender, 10*i, 10*i+10, use_local)
+            person_model = GenerateHumanModel("男性", str(10*i), str(10*i+10), use_local)
             if person_model is None:
                 st.error("有効な人間モデルの生成に失敗しました。")
                 break
             people_list.append(person_model)
             st.write(f"生成された人間モデル: {person_model.name}")
+            
+            person_model = GenerateHumanModel("女性", str(10*i), str(10*i+10), use_local)
+            if person_model is None:
+                st.error("有効な人間モデルの生成に失敗しました。")
+                break
+            people_list.append(person_model)
+            st.write(f"生成された人間モデル: {person_model.name}")
+
 
     
     # データフレームの作成
