@@ -87,7 +87,7 @@ def GenerateHumanModel(gender, age_range_start, age_range_end, use_local):
     prompt_with_format_instructions = prompt.partial(format_instructions=format_instructions)
     
     chain = prompt_with_format_instructions | model | output_parser
-    print(f"トークン数: {CountToken(prompt_with_format_instructions)}")
+    print(f"トークン数: {CountToken(prompt_with_format_instructions, {"age": age_range_start + "〜" + age_range_end + "代", "gender": gender})}")
     
     for _ in range(3):
         try:
@@ -218,10 +218,11 @@ SNS利用状況: {sns_usage}
     output_parser = StrOutputParser()
     
     positive_chain = positive_prompt | model | output_parser
-
+    print(f"トークン数: {CountToken(positive_prompt, input_data)}")
     positive_chain_output = positive_chain.invoke(input_data)
        
     negative_chain = negative_prompt | model | output_parser
+    print(f"トークン数: {CountToken(negative_prompt, input_data)}")
     negative_chain_output = negative_chain.invoke(input_data)
     
     synthesize_prompt = ChatPromptTemplate.from_template(
@@ -259,7 +260,7 @@ SNS利用状況: {sns_usage}
     )
     
     synthesize_chain = synthesize_prompt | model | output_parser
-    print(f"トークン数: {CountToken(synthesize_prompt)}")
+    print(f"トークン数: {CountToken(synthesize_prompt, {**input_data, **{'positive': positive_chain_output, 'negative': negative_chain_output}})}")
     return_data = synthesize_chain.invoke({
         **input_data,
         **{
@@ -316,7 +317,6 @@ SNS利用状況: {sns_usage}
     )
     
     prompt_with_format_instructions = opinion_prompt.partial(format_instructions=format_instructions)
-    print(f"トークン数: {CountToken(prompt_with_format_instructions)}")
     
     chain = prompt_with_format_instructions | model | output_parser
     for _ in range(3):

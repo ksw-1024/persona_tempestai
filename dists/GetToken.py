@@ -1,7 +1,7 @@
 import tiktoken
 from langchain.prompts import ChatPromptTemplate
 
-def CountToken(prompt_template: ChatPromptTemplate) -> int:
+def CountToken(prompt_template: ChatPromptTemplate, input_data: dict) -> int:
     """
     LangChainのChatPromptTemplate型を受け取り、TikTokenでトークン数をカウントする関数。
 
@@ -12,7 +12,7 @@ def CountToken(prompt_template: ChatPromptTemplate) -> int:
         int: トークン数。
     """
     # ChatPromptTemplateを文字列に変換
-    prompt_string = str(prompt_template)
+    prompt_string = str(prompt_template.format(input_data))
     print(prompt_string)
 
     # TikTokenのエンコーダーを初期化 (cl100k_baseはOpenAIのモデルで使用される一般的なエンコーディング)
