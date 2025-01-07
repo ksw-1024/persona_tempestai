@@ -51,39 +51,19 @@ st.markdown("""
 
 st.markdown('<div class="big-title">ペルソナ作成</div>', unsafe_allow_html=True)
 
-example_service_req = """1. サービス概要
-目的: 家庭やオフィスに手軽に花を取り入れることで、生活空間の彩りと癒しを提供。
-対象顧客: 
-  - 花屋に行く時間がないが花を楽しみたい人。
-  - 季節感やインテリアとして花を取り入れたい人。
-  - ギフト用途で利用したい人。
-
-2. サービス内容
-配送プラン
-- 配送頻度: 毎日、週1回、隔週、月1回など柔軟な選択肢を提供。
-- 配送方法:
-  - ポスト投函（小型ブーケ用）。
-  - 宅配便（大きめの花束や特別なアレンジメント用）。
-  - 手渡し配送（高級プラン向け）。
-
-料金プラン
-- 初心者向け: 小型ブーケで550円～1,000円/回（送料別）。
-- 中級者向け: ボリュームがある花束で1,500円～2,500円/回。
-- 高級プラン: 特別アレンジメントで3,000円以上。
-
-カスタマイズオプション
-- 花の種類や色味の選択（例: 季節感重視、特定色指定）。
-- ギフトラッピングやメッセージカード。
-- 環境配慮型（ロスフラワー活用）オプション。
-
-付加価値サービス
-- 花瓶や延命剤の提供。
-- 花の種類や飾り方を紹介するガイド付き。
-- サブスクリプション特典（割引、スキップ・解約自由）。"""
+example_service_title = "フラデリ"
+example_service_concept = """家庭やオフィスに手軽に花を取り入れることで、生活空間の彩りと癒しを提供。"""
+example_service_customer = """花屋に行く時間がないが花を楽しみたい人。\n季節感やインテリアとして花を取り入れたい人。\nギフト用途で利用したい人。"""
+example_service_description = """フラデリは、家庭やオフィスに手軽に花を取り入れることで、生活空間の彩りと癒しを提供するサービスです。配送プランは、配送頻度や配送方法を柔軟に選択でき、料金プランは初心者向けから高級プランまで幅広く提供しています。カスタマイズオプションや付加価値サービスも充実しており、幅広いニーズに対応しています。"""
+example_service_revenue = """初心者向け: 小型ブーケで550円～1,000円/回（送料別）。\n中級者向け: ボリュームがある花束で1,500円～2,500円/回。\n高級プラン: 特別アレンジメントで3,000円以上。"""
 
 with st.form("persona_form"):
-    service_title = st.text_input("サービスタイトル", value="フラデリ")
-    service_req = st.text_area("サービス要件", value=example_service_req, height=400)
+    service_title = st.text_input("サービスタイトル", value=example_service_title)
+    service_concept = st.text_area("サービスコンセプト", value=example_service_concept)
+    service_customer = st.text_area("顧客像", value=example_service_customer)
+    service_description = st.text_area("サービス概要", value=example_service_description)
+    service_revenue = st.text_area("収益モデル", value=example_service_revenue)
+    
     gender = st.selectbox("ターゲットの性別", ["男性", "女性", "その他", "男女どちらでも"])
     
     col1, col2 = st.columns([1, 1])
@@ -93,7 +73,7 @@ with st.form("persona_form"):
         age_range_end = st.selectbox("ターゲットの年代（終了）", [str(i) for i in range(10, 101, 10)])
         
     number_of_people = st.number_input("生成する人数", min_value=1, max_value=100, value=1)
-    use_local = st.checkbox("ローカルモデルを使用する", value=True)
+    use_local = st.checkbox("ローカルモデルを使用する", value=False)
     submitted = st.form_submit_button("ペルソナ生成")
     
     graph_placeholder = st.empty()
@@ -137,7 +117,7 @@ if submitted:
                 * 最近の出来事やエピソード: {person_model.recent_events}
             """
             )
-        persona_data = GenerateComment(service_title, service_req, person_model, use_local)
+        persona_data = GenerateComment(service_title, service_concept, service_customer, service_description, service_revenue, person_model, use_local)
         persona_list.append(persona_data)
         
         with st.expander(f"生成されたコメント", expanded=False):
@@ -165,21 +145,23 @@ if submitted:
             waiting_bar = st.progress(0, text=waiting_text)
             
             percent_complete = 0.0
-            total_count = 30
+            total_count = 300
             
             for _ in range(total_count):
                 percent_complete += 1 / total_count
                 if percent_complete <= 1:
                     waiting_bar.progress(percent_complete, text=waiting_text)
-                time.sleep(1)
+                time.sleep(0.1)
             
             waiting_bar.empty()
                     
-    remake_survice_data = SuggestBusinessPlan(service_req, persona_list, use_local)
+    remake_survice_data = SuggestBusinessPlan(service_concept, service_customer, service_description, service_revenue, persona_list, use_local)
     st.markdown(f"""
         ## サービス改良完了
         ### 改良されたサービス要件"""
     )
+    st.write("------------")
+    
     st.write(remake_survice_data)
     
     st.write("------------")

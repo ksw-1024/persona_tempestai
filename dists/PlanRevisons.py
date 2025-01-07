@@ -25,7 +25,7 @@ class Opinion(BaseModel):
     want_level: int = Field(description="サービスの魅力度レベル。0から10の間の整数値。")
     reason: str = Field(description="理由。100字以内。")
 
-def SuggestBusinessPlan(service_data, persona_list, use_local):
+def SuggestBusinessPlan(service_concept, service_customer, service_description, service_revenue, persona_list, use_local):
     if use_local:
         model = model_local
     else:
@@ -47,11 +47,32 @@ def SuggestBusinessPlan(service_data, persona_list, use_local):
         template="""
             次のユーザーの意見の要約を元に、サービスを改良してください。
             元のサービス要件の形式を必ず守りなさい。必要な文言のみ出力しなさい。
+            また、一番下には改良した部分を簡潔にまとめなさい。
+            ---
+            改良した部分の記述形式
+            
+            改良点:
+            * ここに改良した部分を記述
+            * ここに改良した部分を記述
+            * ここに改良した部分を記述
+            
             ユーザーの意見: {persona}
-            サービス要件: {service_data}
+            
+            ## サービス要件
+            ### サービスコンセプト
+            {service_concept}
+            
+            ### ターゲット顧客
+            {service_customer}
+            
+            ### サービス説明
+            {survice_description}
+            
+            ### 収益モデル
+            {service_revenue}
         """
     )
     
     chain = persona_remake_prompt | model | output_parser
-    return_data = chain.invoke({"persona": persona_summerize, "service_data": service_data})
+    return_data = chain.invoke({"persona": persona_summerize, "service_concept": service_concept, "service_customer": service_customer, "survice_description": service_description, "service_revenue": service_revenue})
     return return_data

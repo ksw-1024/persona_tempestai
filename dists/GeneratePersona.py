@@ -90,7 +90,7 @@ def GenerateHumanModel(gender, age_range_start, age_range_end, use_local):
             
     return None
 
-def GenerateComment(service_title, service_data, character_data: Character, use_local):
+def GenerateComment(service_title, service_concept, service_customer, service_description, service_revenue, character_data: Character, use_local):
     
     if use_local:
         model = model_local
@@ -128,7 +128,12 @@ def GenerateComment(service_title, service_data, character_data: Character, use_
             
             あなたは{service_title}のユーザーです。サービスに関する感想を述べてください。口調なども含めて、自由に書いてください。出来る限り肯定的に書いてください。
             ただし、要件以外についてのコメントは控えてください。
-            {service_title}の要件: {service_data}
+            
+            ### 要件
+            {service_title}のコンセプト: {service_concept}
+            {service_title}の顧客像: {service_customer}
+            {service_title}のサービス内容: {service_description}
+            {service_title}の収益モデル: {service_revenue}
         """
     )
     
@@ -163,7 +168,12 @@ def GenerateComment(service_title, service_data, character_data: Character, use_
             
             あなたは{service_title}のユーザーです。サービスに関する感想を述べてください。口調なども含めて、自由に書いてください。出来る限り否定的に書いてください。
             ただし、要件以外についてのコメントは控えてください。
-            {service_title}の要件: {service_data}
+            
+            ### 要件
+            {service_title}のコンセプト: {service_concept}
+            {service_title}の顧客像: {service_customer}
+            {service_title}のサービス内容: {service_description}
+            {service_title}の収益モデル: {service_revenue}
         """
     )
     
@@ -197,7 +207,10 @@ def GenerateComment(service_title, service_data, character_data: Character, use_
         "relationships": character_data.relationships,
         "recent_events": character_data.recent_events,
         "service_title": service_title,
-        "service_data": service_data
+        "service_concept": service_concept,
+        "service_customer": service_customer,
+        "service_description": service_description,
+        "service_revenue": service_revenue
     })
        
     negative_chain = negative_prompt | model | output_parser
@@ -228,7 +241,10 @@ def GenerateComment(service_title, service_data, character_data: Character, use_
         "relationships": character_data.relationships,
         "recent_events": character_data.recent_events,
         "service_title": service_title,
-        "service_data": service_data
+        "service_concept": service_concept,
+        "service_customer": service_customer,
+        "service_description": service_description,
+        "service_revenue": service_revenue
     })
     
     synthesize_prompt = ChatPromptTemplate.from_template(
